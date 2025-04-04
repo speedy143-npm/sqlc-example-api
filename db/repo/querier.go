@@ -12,6 +12,14 @@ type Querier interface {
 	CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error)
 	GetMessageByID(ctx context.Context, id string) (Message, error)
 	GetMessagesByThread(ctx context.Context, thread string) ([]Message, error)
+	// my added delete message code
+	DeleteMessage(ctx context.Context, messageID string) error
+	// my added update message code
+	PatchMessage(ctx context.Context,messageID string, arg PatchMessageParams) (Message, error)
+
+	// creating a thread
+	CreateThread(ctx context.Context, arg CreateThreadParams) (Thread, error)
+	GetThreadByID(ctx context.Context, id string) (Thread, error)
 }
 
 var _ Querier = (*Queries)(nil)

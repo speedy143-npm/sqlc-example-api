@@ -11,3 +11,10 @@ WHERE id = $1;
 SELECT * FROM message
 WHERE thread = $1
 ORDER BY created_at DESC;
+
+
+-- creating a thread
+-- name: CreateThread :one
+INSERT INTO thread (thread)
+VALUES ($1)
+RETURNING *;

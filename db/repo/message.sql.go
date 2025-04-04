@@ -83,3 +83,92 @@ func (q *Queries) GetMessagesByThread(ctx context.Context, thread string) ([]Mes
 	}
 	return items, nil
 }
+
+
+
+
+ const deleteMessage = ` -- name: DeleteMessage :one
+ DELETE FROM message WHERE id = $1`
+// my code to delete a message by id
+func (q *Queries) DeleteMessage(ctx context.Context, messageID string) error {
+   
+    _, err := q.db.Exec(ctx, deleteMessage, messageID)
+    if err != nil {
+        return err
+    }
+    return nil
+}
+
+// update query
+const updateMessage = `-- name: UpdateMessage :one
+UPDATE message
+SET  thread=$1,
+     sender=$2,
+     content=$3
+
+RETURNING id, thread, sender, content, created_at
+`
+
+// struct to hold update
+type PatchMessageParams struct {
+	//ID string `json:"id"`
+	Thread  string `json:"thread"`
+	Sender  string `json:"sender"`
+	Content string `json:"content"`
+}
+
+// my code to update a message by id
+func (q *Queries) PatchMessage(ctx context.Context, messageID string, arg PatchMessageParams) (Message, error) {
+    row := q.db.QueryRow(ctx, updateMessage, arg.Thread, arg.Sender, arg.Content)
+    var i Message
+    err := row.Scan(
+		&i.ID,
+        &i.Thread,
+        &i.Sender,
+        &i.Content,
+        &i.CreatedAt,
+    )
+    return i, err
+}
+
+
+
+// creating a thread
+const CreateThread = `-- name: CreateThread :one
+INSERT INTO thread (thread)
+VALUES ($1)
+RETURNING id, thread, created_at
+`
+
+type CreateThreadParams struct {
+	Thread  string `json:"thread"`
+}
+
+func (q *Queries) CreateThread(ctx context.Context, arg CreateThreadParams) (Thread, error) {
+	row := q.db.QueryRow(ctx, CreateThread, arg.Thread)
+	var i Thread
+	err := row.Scan(
+		&i.ID,
+		&i.Thread,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+
+// getting a thread by ID 
+const getThreadByID = `-- name: GetThreadByID :one
+SELECT id, thread, created_at FROM thread
+WHERE id = $1
+`
+
+func (q *Queries) GetThreadByID(ctx context.Context, id string) (Thread, error) {
+	row := q.db.QueryRow(ctx, getThreadByID, id)
+	var i Thread
+	err := row.Scan(
+		&i.ID,
+		&i.Thread,
+		&i.CreatedAt,
+	)
+	return i, err
+}
