@@ -2,6 +2,7 @@
 CREATE TABLE "customers" (
   "id" SERIAL PRIMARY KEY,
   "name" VARCHAR(255) NOT NULL,
+  "phoneno" VARCHAR(255) NOT NULL,
   "email" VARCHAR(255) NOT NULL UNIQUE,
   "created_at" TIMESTAMP DEFAULT now()
 );
@@ -19,6 +20,7 @@ CREATE TABLE "products" (
 CREATE TABLE "orders" (
   "id" SERIAL PRIMARY KEY,
   "customer_id" INT NOT NULL,
+  "order_status" VARCHAR(20),
   "order_date" TIMESTAMP DEFAULT now(),
   "total_price" DECIMAL(10, 2) NOT NULL,
   CONSTRAINT fk_customer FOREIGN KEY ("customer_id") REFERENCES "customers" ("id") ON DELETE CASCADE
