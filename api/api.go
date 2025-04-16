@@ -1,7 +1,10 @@
 package api
 
 import (
+	"database/sql"
+	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/Iknite-Space/sqlc-example-api/db/repo"
 	"github.com/gin-gonic/gin"
@@ -84,7 +87,21 @@ func (h *MessageHandler) handleGetThreadMessages(c *gin.Context) {
 		return
 	}
 
-	messages, err := h.querier.GetMessagesByThread(c, id)
+	limit, err := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	if err != nil || limit <= 0 {
+		limit = 10
+	}
+
+	offset, err := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	if err != nil || offset < 0 {
+		offset = 0
+	}
+	req := repo.PaginationParams{
+		ThreadId: id,
+		Limit:    int32(limit),
+		Offset:   int32(offset),
+	}
+	messages, err := h.querier.GetMessagesByThread(c, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -109,11 +126,21 @@ func (h *MessageHandler) handleDeleteMessage(c *gin.Context) {
 		return
 	}
 
+	// Check id existence
+	_, err := h.querier.GetMessageByID(c, messageID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "message ID Not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+
+	}
 	// Perform the deletion
-	err := h.querier.DeleteMessage(c, messageID)
+	err = h.querier.DeleteMessage(c, messageID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
 	}
 
 	// Respond with a success message

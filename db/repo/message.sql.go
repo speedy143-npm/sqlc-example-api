@@ -56,10 +56,16 @@ const getMessagesByThread = `-- name: GetMessagesByThread :many
 SELECT id, thread, sender, content, created_at FROM message
 WHERE thread = $1
 ORDER BY created_at DESC
+LIMIT  $2 OFFSET $3
 `
+type PaginationParams struct{
+	ThreadId string
+	Limit int32
+	Offset int32
+}
 
-func (q *Queries) GetMessagesByThread(ctx context.Context, thread string) ([]Message, error) {
-	rows, err := q.db.Query(ctx, getMessagesByThread, thread)
+func (q *Queries) GetMessagesByThread(ctx context.Context, arg PaginationParams) ([]Message, error) {
+	rows, err := q.db.Query(ctx, getMessagesByThread, arg.ThreadId,arg.Limit,arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -101,11 +107,11 @@ func (q *Queries) DeleteMessage(ctx context.Context, messageID string) error {
 
 // update query
 const updateMessage = `-- name: UpdateMessage :one
-UPDATE message
-SET  thread=$1,
-     sender=$2,
-     content=$3
-
+UPDATE message 
+SET  thread=$2,
+     sender=$3,
+     content=$4
+WHERE id = $1
 RETURNING id, thread, sender, content, created_at
 `
 
@@ -119,7 +125,7 @@ type PatchMessageParams struct {
 
 // my code to update a message by id
 func (q *Queries) PatchMessage(ctx context.Context, messageID string, arg PatchMessageParams) (Message, error) {
-    row := q.db.QueryRow(ctx, updateMessage, arg.Thread, arg.Sender, arg.Content)
+    row := q.db.QueryRow(ctx, updateMessage, messageID, arg.Thread, arg.Sender, arg.Content)
     var i Message
     err := row.Scan(
 		&i.ID,

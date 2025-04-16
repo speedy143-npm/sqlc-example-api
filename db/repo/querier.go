@@ -11,7 +11,7 @@ import (
 type Querier interface {
 	CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error)
 	GetMessageByID(ctx context.Context, id string) (Message, error)
-	GetMessagesByThread(ctx context.Context, thread string) ([]Message, error)
+	GetMessagesByThread(ctx context.Context, arg PaginationParams) ([]Message, error)
 	// my added delete message code
 	DeleteMessage(ctx context.Context, messageID string) error
 	// my added update message code
